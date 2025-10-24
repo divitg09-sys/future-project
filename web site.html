@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Technology — The Future Project</title>
+<style>
+  /* =================== Reset & Base =================== */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #081024;
+    color: #e6f9ff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+
+  /* =================== Animated Background =================== */
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    background: radial-gradient(ellipse at 10% 10%, rgba(12,18,40,0.6), rgba(2,6,12,1));
+  }
+
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    pointer-events: none;
+    background-image:
+      linear-gradient(90deg, rgba(0,200,255,0.03) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(120,0,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    filter: blur(5px) saturate(120%);
+    opacity: 0.85;
+    animation: gridMove 22s linear infinite;
+  }
+  @keyframes gridMove {
+    0% { background-position: 0 0, 0 0; }
+    50% { background-position: 800px 400px, -800px -400px; }
+    100% { background-position: 0 0, 0 0; }
+  }
+
+  /* Canvas animated streaks */
+  #streaksCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  /* =================== Layout =================== */
+  header.site-header {
+    padding: 28px 18px 10px;
+    text-align: center;
+  }
+  header h1 {
+    font-size: 40px;
+    margin: 0 0 6px 0;
+    color: #bff9ff;
+    text-shadow: 0 6px 24px rgba(0,200,255,0.06);
+  }
+  header p.lead {
+    color: #aeeeff;
+    margin: 0 0 10px 0;
+    font-size: 15px;
+  }
+
+  .topbar {
+    max-width: 1100px;
+    margin: 8px auto 0;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand { color: #cfefff; font-weight: 700; }
+  .home-btn {
+    background: linear-gradient(180deg,#00d4ff,#0080ff);
+    color: #011425;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .home-btn:hover { filter: brightness(1.02); transform: translateY(-2px); }
+
+  .container {
+    max-width: 1100px;
+    margin: 18px auto 80px;
+    padding: 0 14px;
+  }
+
+  /* =================== Grid of Topic Cards =================== */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(0,255,230,0.06), rgba(0,150,255,0.04));
+    border: 1px solid rgba(120,230,255,0.12);
+    padding: 16px;
+    border-radius: 12px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-decoration: none;
+    color: #eaffff;
+    transition: transform .24s ease, box-shadow .24s ease, background .24s ease;
+    box-shadow: 0 8px 30px rgba(0,140,200,0.04);
+  }
+  .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 22px 60px rgba(0,150,220,0.12);
+    background: linear-gradient(180deg, rgba(0,255,230,0.14), rgba(0,160,255,0.1));
+  }
+  .card h3 { font-size: 18px; margin: 0 0 6px; color:#ecffff; }
+  .card p { margin:0; color: rgba(2,8,12,0.9); font-weight:700; background: rgba(255,255,255,0.08); padding:8px; border-radius:6px; }
+  .card small { display:block; margin-top:8px; color: rgba(230,250,255,0.85); font-size:13px; }
+
+  /* =================== Section "Pages" =================== */
+  .section {
+    display: none;
+    max-width: 980px;
+    margin: 34px auto;
+    padding: 26px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  }
+  .section.active { display: block; }
+  .section h2 { color: #dffcff; font-size: 28px; margin-bottom: 8px; }
+  .section p.lead { color: #cfefff; font-size: 16px; margin-bottom: 12px; }
+
+  .media {
+    display:flex; gap: 18px; align-items:center; flex-wrap:wrap; margin-top:12px;
+  }
+  .media img {
+    width:420px; max-width:100%; border-radius:10px;
+    box-shadow: 0 12px 30px rgba(0,160,220,0.06);
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .aside { flex:1; min-width:220px; }
+  .aside ul { margin-top:6px; }
+  .aside li { list-style:none; margin:8px 0; background: rgba(0,0,0,0.14); padding:8px 10px; border-radius:8px; color:#e6fbff; }
+
+  .anchor { display:inline-block; margin-top:12px; color:#fff1a8; text-decoration:underline; }
+  .anchor:hover { color:#ffd200; }
+
+  .timeline { width:100%; border-collapse:collapse; margin-top:12px; color:#e9fbff; }
+  .timeline th, .timeline td { border:1px solid rgba(255,255,255,0.05); padding:10px; text-align:left; }
+  .timeline th { background: rgba(0,0,0,0.16); font-weight:700; }
+
+  footer.site-footer {
+    text-align:center; color:#bfcfcf; padding:22px; margin-top:36px; border-top:1px solid rgba(255,255,255,0.04);
+  }
+
+  /* responsive */
+  @media (max-width:760px) {
+    header h1 { font-size:30px; }
+    .card { min-height:110px; padding:12px; }
+    .media { flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+  <div class="grid-overlay"></div>
+  <canvas id="streaksCanvas"></canvas>
+
+  <header class="site-header">
+    <h1>Technology — The Future Project</h1>
+    <p class="lead">Clear explanations, images, and links. Click a topic to open its full page.</p>
+    <div class="topbar">
+      <div class="brand">The Future Project</div>
+      <a class="home-btn" href="#home" id="homeBtn">Home</a>
+    </div>
+  </header>
+
+  <div class="container" id="home">
+    <div class="cards" role="navigation" aria-label="Technology topics">
+      <a href="#intro_ai" class="card" data-target="intro_ai">
+        <h3>01 • Artificial Intelligence</h3>
+        <p>Smart systems, machine learning, AI assistants.</p>
+        <small>Assistants, creativity, research</small>
+      </a>
+
+      <a href="#webdev" class="card" data-target="webdev">
+        <h3>02 • Web Development</h3>
+        <p>HTML, CSS, JavaScript and website building.</p>
+        <small>Frontend, backend, deployment</small>
+      </a>
+
+      <a href="#cyber" class="card" data-target="cyber">
+        <h3>03 • Cybersecurity</h3>
+        <p>Protecting systems, data, and users online.</p>
+        <small>Passwords, encryption, 2FA</small>
+      </a>
+
+      <a href="#iot" class="card" data-target="iot">
+        <h3>04 • Internet of Things</h3>
+        <p>Connected devices that make life easier.</p>
+        <small>Smart homes, sensors, automation</small>
+      </a>
+
+      <a href="#cloud" class="card" data-target="cloud">
+        <h3>05 • Cloud Computing</h3>
+        <p>Servers, storage, and services on the internet.</p>
+        <small>Scale apps, store data, collaborate</small>
+      </a>
+
+      <a href="#robotics" class="card" data-target="robotics">
+        <h3>06 • Robotics & Automation</h3>
+        <p>Robots for factories, medicine, and daily tasks.</p>
+        <small>Drones, helpers, factory automation</small>
+      </a>
+
+      <a href="#aiethics" class="card" data-target="aiethics">
+        <h3>07 • AI Ethics & Safety</h3>
+        <p>Privacy, fairness, and human oversight of AI.</p>
+        <small>Bias, safety, responsible design</small>
+      </a>
+
+      <a href="#futuretech" class="card" data-target="futuretech">
+        <h3>08 • Future Technologies</h3>
+        <p>Quantum, biotech, advanced materials, and more.</p>
+        <small>What comes next in tech</small>
+      </a>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- 01: AI -->
+    <section id="intro_ai" class="section" aria-labelledby="intro_ai_title">
+      <h2 id="intro_ai_title">Artificial Intelligence</h2>
+      <p class="lead">Artificial Intelligence (AI) uses data and algorithms to perform tasks that usually require human intelligence. Today's AI powers recommendations, translations, and basic automation. In the future, AI will assist researchers, doctors, and creators — amplifying human skills rather than replacing them.</p>
+      <div class="media">
+        <img alt="AI illustration" src="https://upload.wikimedia.org/wikipedia/commons/6/6a/Artificial_intelligence_logo.png">
+        <div class="aside">
+          <p><strong>Key uses</strong></p>
+          <ul>
+            <li>Recommendation systems (video, music, shopping)</li>
+            <li>Image and speech recognition (assistive tech)</li>
+            <li>Data analysis to accelerate discoveries</li>
+          </ul>
+          <p><a class="anchor" href="https://en.wikipedia.org/wiki/Artificial_intelligence" target="_blank" rel="noopener">Read more — Artificial intelligence (Wikipedia)</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- 02: Web Dev -->
+    <section id="webdev" class="section" aria-labelledby="webdev_title">
+      <h2 id="webdev_title">Web Development</h2>
+      <p class="lead">Web development builds websites and web applications. The basic building blocks are HTML (structure), CSS (style), and JavaScript (behavior). You can create multi-page websites, interactive apps, and publish them online for others to see.</p>
+      <div class="media">
+        <img alt="Web Development" src="https://upload.wikimedia.org/wikipedia/commons/6/6a/JavaScript-logo.png">
+        <div class="aside">
+          <p><strong>Steps to create a website</strong></p>
+          <ul>
+            <li>Create HTML files (index.html, about.html)</li>
+            <li>Add CSS to make it look good</li>
+            <li>Use JavaScript for interactions</li>
+            <li>Host on services like GitHub Pages or Netlify</li>
+          </ul>
+          <p><a class="anchor" href="https://developer.mozilla.org/en-US/docs/Learn" target="_blank" rel="noopener">MDN Web Docs — Learn web development</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- 03: Cybersecurity -->
+    <section id="cyber" class="section" aria-labelledby="cyber_title">
+      <h2 id="cyber_title">Cybersecurity</h2>
+      <p class="lead">Cybersecurity protects computers, networks, and data. Simple good practices like strong passwords, updates, and cautious clicking stop many attacks. Advanced tools like encryption and multi-factor authentication make systems more secure.</p>
+      <div class="media">
+        <img alt="Cybersecurity" src="https://upload.wikimedia.org/wikipedia/commons/7/73/Generic_security.png">
+        <div class="aside">
+          <p><strong>Basic safety tips</strong></p>
+          <ul>
+            <li>Use a password manager and unique passwords</li>
+            <li>Enable two-factor authentication (2FA)</li>
+            <li>Keep software and devices updated</li>
+          </ul>
+          <p><a class="anchor" href="https://en.wikipedia.org/wiki/Cybersecurity" target="_blank" rel="noopener">More — Cybersecurity (Wikipedia)</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- 04: IoT -->
+    <section id="iot" class="section" aria-labelledby="iot_title">
+      <h2 id="iot_title">Internet of Things (IoT)</h2>
+      <p class="lead">IoT connects everyday objects — lights, fridges, watches — to the internet. These devices gather data and can be automated to save time and energy, making homes, farms, and cities smarter.</p>
+      <div class="media">
+        <img alt="IoT" src="https://upload.wikimedia.org/wikipedia/commons/4/49/Internet_of_things_devices.svg">
+        <div class="aside">
+          <p><strong>Common examples</strong></p>
+          <ul>
+            <li>Smart bulbs and thermostats</li>
+            <li>Fitness trackers and health monitors</li>
+            <li>Connected agricultural sensors</li>
+          </ul>
+          <p><a class="anchor" href="https://en.wikipedia.org/wiki/Internet_of_things" target="_blank" rel="noopener">More — Internet of Things</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- 05: Cloud -->
+    <section id="cloud" class="section" aria-labelledby="cloud_title">
+      <h2 id="cloud_title">Cloud Computing</h2>
+      <p class="lead">Cloud computing provides computing power and storage over the internet. It helps apps scale, stores large data, and makes collaboration easy — without needing local servers for everything.</p>
+      <div class="media">
+        <img alt="Cloud computing" src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Cloud_computing.png">
+        <div class="aside">
+          <p><strong>Cloud models</strong></p>
+          <ul>
+            <li>IaaS — virtual servers (infrastructure)</li>
+            <li>PaaS — managed platforms for building apps</li>
+            <li>SaaS — software delivered over the web</li>
+          </ul>
+          <p><a class="anchor" href="https://en.wikipedia.org/wiki/Cloud_computing" target="_blank" rel="noopener">More — Cloud computing</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- 06: Robotics -->
+    <section id="robotics" class="section" aria-labelledby="robotics_title">
+      <h2 id="robotics_title">Robotics & Automation</h2>
+      <p class="lead">Robots perform repetitive, precise, or dangerous tasks. Automation increases productivity in factories, assists in medicine, and helps explore remote places safely.</p>
+      <div class="media">
+        <img alt="Robotics" src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Robot.jpg">
+        <div class="aside">
+          <p><strong>Robotics uses</strong></p>
+          <ul>
+            <li>Factory robots for production</li>
+            <li>Medical robots for surgery and rehab</li>
+            <li>Drones for delivery, mapping, and inspection</li>
+          </ul>
+          <p><a class="anchor" href="https://en.wikipedia.org/wiki/Robotics" target="_blank" rel="noopener">More — Robotics</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- 07: AI Ethics -->
+    <section id="aiethics" class="section" aria-labelledby="aiethics_title">
+      <h2 id="aiethics_title">AI Ethics & Safety</h2>
+      <p class="lead">AI must be designed to be safe, fair, and respect privacy. Ethical design reduces bias and keeps humans in control of important decisions.</p>
+      <div class="media">
+        <img alt="AI Ethics" src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Ethics_banner.png">
+        <div class="aside">
+          <p><strong>Important principles</strong></p>
+          <ul>
+            <li>Privacy protection and data minimization</li>
+            <li>Testing to prevent biased outcomes</li>
+            <li>Clear human oversight and accountability</li>
+          </ul>
+          <p><a class="anchor" href="https://en.wikipedia.org/wiki/AI_ethics" target="_blank" rel="noopener">More — AI ethics</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- 08: Future Tech -->
+    <section id="futuretech" class="section" aria-labelledby="futuretech_title">
+      <h2 id="futuretech_title">Future Technologies</h2>
+      <p class="lead">Future tech includes quantum computing, biotechnology improvements, advanced materials, and new energy sources. These will open new possibilities for medicine, communication, and discovery.</p>
+      <div class="media">
+        <img alt="Future tech" src="https://upload.wikimedia.org/wikipedia/commons/4/4f/Technology.jpg">
+        <div class="aside">
+          <p><strong>Look ahead</strong></p>
+          <ul>
+            <li>Quantum computers solving special problems</li>
+            <li>Biotech for precision therapies and better agriculture</li>
+            <li>Materials that are lighter, stronger, and more sustainable</li>
+          </ul>
+          <p><a class="anchor" href="https://en.wikipedia.org/wiki/Technology" target="_blank" rel="noopener">More — Technology</a></p>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+    <!-- Resources & Timeline -->
+    <section id="resources" class="section" aria-labelledby="resources_title">
+      <h2 id="resources_title">Resources & Timeline</h2>
+      <p class="lead">Short reading list and milestone timeline to help plan study or projects.</p>
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <h3 style="color:#cff9ff">Quick Reads</h3>
+          <ul style="color:#dffcff">
+            <li><a class="anchor" href="https://developer.mozilla.org/" target="_blank" rel="noopener">MDN Web Docs</a></li>
+            <li><a class="anchor" href="https://www.coursera.org/" target="_blank" rel="noopener">Coursera</a></li>
+            <li><a class="anchor" href="https://arxiv.org/" target="_blank" rel="noopener">arXiv (research)</a></li>
+          </ul>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <h3 style="color:#cff9ff">Timeline</h3>
+          <table class="timeline">
+            <tr><th>Years</th><th>Focus</th></tr>
+            <tr><td>2025–2035</td><td>AI tools in daily life; cloud & edge growth</td></tr>
+            <tr><td>2035–2050</td><td>Widespread automation; resilient energy grids</td></tr>
+            <tr><td>2050–2075</td><td>Advanced biotech & quantum applications</td></tr>
+          </table>
+        </div>
+      </div>
+      <a class="anchor" href="#home">← Back to Home</a>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2025 The Technology Future Project — Designed by <b>Divit Garg</b></p>
+  </footer>
+
+<script>
+(function(){
+  // navigation: show/hide sections like separate pages
+  const sections = document.querySelectorAll('.section');
+  const home = document.getElementById('home');
+
+  function hideAllSections() {
+    sections.forEach(s => s.classList.remove('active'));
+    if (home) home.style.display = 'block';
+  }
+  function showSection(id) {
+    sections.forEach(s => s.classList.remove('active'));
+    if (home) home.style.display = 'none';
+    const sec = document.getElementById(id);
+    if (sec) sec.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // On load: check hash
+  function initFromHash() {
+    const h = location.hash.replace('#','');
+    if (!h || h === 'home') {
+      if (home) home.style.display = 'block';
+      sections.forEach(s => s.classList.remove('active'));
+      return;
+    }
+    const el = document.getElementById(h);
+    if (el) {
+      showSection(h);
+    } else {
+      if (home) home.style.display = 'block';
+    }
+  }
+
+  window.addEventListener('load', initFromHash);
+  window.addEventListener('popstate', initFromHash);
+
+  // intercept clicks on internal anchors to avoid default jump and handle history
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const id = href.replace('#','');
+      if (id === 'home') {
+        history.pushState(null,'', '#home');
+        sections.forEach(s => s.classList.remove('active'));
+        if (home) home.style.display = 'block';
+        window.scrollTo({ top:0, behavior:'smooth' });
+      } else {
+        history.pushState(null,'', '#'+id);
+        showSection(id);
+      }
+    }
+  });
+
+  // allow keyboard Enter on card elements (for accessibility)
+  document.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') {
+        const href = card.getAttribute('href') || card.dataset.target;
+        if (href) {
+          const id = href.replace('#','');
+          history.pushState(null,'', '#'+id);
+          showSection(id);
+        }
+      }
+    });
+  });
+
+  // ================= animated streaks canvas =================
+  const canvas = document.getElementById('streaksCanvas');
+  const ctx = canvas.getContext && canvas.getContext('2d');
+  if (ctx) {
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+    const trails = [];
+    for (let i=0;i<110;i++){
+      trails.push({
+        x: Math.random()*w,
+        y: Math.random()*h,
+        len: Math.random()*120+20,
+        xs: -1 + Math.random()*2,
+        ys: 0.6 + Math.random()*2.4,
+        alpha: 0.04 + Math.random()*0.16,
+        hue: 180 + Math.random()*120
+      });
+    }
+    function resize(){
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      for (let i=0;i<trails.length;i++){
+        const p = trails[i];
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.len*p.xs*0.6, p.y - p.len*p.ys*0.6);
+        ctx.strokeStyle = `hsla(${p.hue}, 100%, 
+        60%, ${p.alpha})`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        p.x += p.xs*2;
+        p.y += p.ys*2;
+        if (p.x > w + 50 || p.y > h + 50) {
+          p.x = Math.random()*w;
+          p.y = -40;
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+
+})();
+</script>
+
+</body>
+</html>
